@@ -1,5 +1,5 @@
 # .NET Core Custom Buildpack for Heroku
-### For .Net Core 8 to Latest Versions
+### For .Net Core 9 to Latest Versions
 ## originally by Softtrends LLC modified by Stratis LLC
 
 This Buidpack can be used to compile and deploy .Net Core application, ASP.Net Application, ASP.Net MVC Application to Heroku. It will pull the .NET Core dependencies from Microsoft, build a .NET Core Application and deploy it to the Heroku Platform. You should use Visual Studio 2022 and higher for best compatibility. Any tool from Visual Studio Code to the fully-featured Visual Studio Enterprise is supported.
