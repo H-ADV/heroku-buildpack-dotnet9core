@@ -36,7 +36,7 @@ elif [[ $herokuos_version == "18.04" ]]; then
 elif [[ $herokuos_version == "20.04" ]]; then
 	apt_install libicu66 libssl1.1
 elif [[ $herokuos_version == "22.04" || $herokuos_version == "24.04" ]]; then
-	apt_install apt-transport-https libicu70 libssl3 libunwind8 libgssapi-krb5-2 libc6 liblttng-ust1
+	apt_install apt-transport-https libicu-dev libssl3 libunwind8 libgssapi-krb5-2 libc6 liblttng-ust1
 else
 	print "Unsupported OS version: $herokuos_version"
 	exit 1
@@ -44,6 +44,14 @@ fi
 
 # Fix apt-cache permission errors
 sudo rm -rf /var/cache/apt/archives/partial/*.deb || true
+
+# Install fallback ICU library if needed
+if ! dpkg-query -W libicu-dev &>/dev/null; then
+    print "Manually installing libicu70-compatible library"
+    curl -O http://security.ubuntu.com/ubuntu/pool/main/i/icu/libicu70_70.1-2ubuntu2_amd64.deb
+    sudo dpkg -i libicu70_70.1-2ubuntu2_amd64.deb
+    rm libicu70_70.1-2ubuntu2_amd64.deb
+fi
 
 # Skip TELEMETRY_OPTOUT on production environment
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=${DOTNET_SKIP_FIRST_TIME_EXPERIENCE:-1}
