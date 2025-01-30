@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
+
 # bin/compile <build-dir> <cache-dir> <env-dir>
 
 ### Configure environment
+set -o errexit    # Always exit on error
+set -o pipefail   # Don't ignore exit codes when piping output
+set -o nounset    # Fail on unset variables
 
-set -o errexit    # always exit on error
-set -o pipefail   # don't ignore exit codes when piping output
-set -o nounset    # fail on unset variables
 unset GIT_DIR     # Avoid GIT_DIR leak from previous build steps
 
 ### Constants
-
-### Configure directories
 BASE_DIR="$(pwd)"
 BUILD_DIR=${1:-}
 CACHE_DIR=${2:-}
@@ -18,18 +17,12 @@ ENV_DIR=${3:-}
 BP_DIR=$(cd $(dirname ${0:-}); cd ..; pwd)
 
 ### Load dependencies
-
-# shellcheck source=util/common.sh
 source "$BP_DIR/bin/util/common.sh"
-# shellcheck source=util/apt_dpkg_install.sh
-source "$BP_DIR/bin/util/apt_dpkg_install.sh" 
+source "$BP_DIR/bin/util/apt_dpkg_install.sh"
 
 export_env_dir "$ENV_DIR"
 
-### Local variable declaration
-declare herokuos_version framework_version runtime_framework_version
-
-# Get OS
+# Get OS version
 herokuos_version="$(get_linux_platform_version)"
 
 print "OS: Ubuntu $herokuos_version"
@@ -40,18 +33,17 @@ if [[ $herokuos_version == "16.04" ]]; then
 	apt_install libicu55 openssl1.0
 elif [[ $herokuos_version == "18.04" ]]; then
 	apt_install libicu60 openssl1.0
-elif [[ $herokuos_version == "19.04" ]]; then
-	apt_install libicu63 libssl1.1
 elif [[ $herokuos_version == "20.04" ]]; then
-   	apt_install libicu66 libssl1.1
-elif [[ $herokuos_version == "22.04" ]]; then
-   	apt_install apt-transport-https libicu70 libssl3 libunwind8 libgssapi-krb5-2 libc6 liblttng-ust1
-elif [[ $herokuos_version == "24.04" ]]; then
-	apt_install apt-transport-https libicu72 libssl3 libunwind8 libgssapi-krb5-2 libc6 liblttng-ust1
+	apt_install libicu66 libssl1.1
+elif [[ $herokuos_version == "22.04" || $herokuos_version == "24.04" ]]; then
+	apt_install apt-transport-https libicu70 libssl3 libunwind8 libgssapi-krb5-2 libc6 liblttng-ust1
 else
 	print "Unsupported OS version: $herokuos_version"
 	exit 1
 fi
+
+# Fix apt-cache permission errors
+sudo rm -rf /var/cache/apt/archives/partial/*.deb || true
 
 # Skip TELEMETRY_OPTOUT on production environment
 export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=${DOTNET_SKIP_FIRST_TIME_EXPERIENCE:-1}
